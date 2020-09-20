@@ -7,34 +7,224 @@
   <body>
   
   
-  <script>
+  <script id="gameScript">
   var gameCanvas = {
+
+
   canvas : document.createElement("canvas"),
   start: function() {
-        this.canvas.width = document.body.offsetWidth;
+		this.canvas.width = document.body.offsetWidth;
         this.canvas.height = document.body.offsetHeight;
         this.context = this.canvas.getContext("2d");
+        this.context.fillStyle = this.color;
+        
         document.body.insertBefore(this.canvas, document.body.childNodes[0]);
         this.frameNo = 0;
+        this.interval = setInterval(gameMainLoop,20);
         },
   clear :function(){
   
   
-        this.context.clearRect(0,0,this.canvas.witdh,this.canvas.height);
+        this.context.clearRect(0,0,this.canvas.width,this.canvas.height);
         },
   }
   
-  function gameMainLoop(){
+  function zip(a,b){// works like python zip
+  	//kind took from https://stackoverflow.com/questions/4856717/javascript-equivalent-of-pythons-zip-function
+	return Array.prototype.map.call( a, function(e,i){return [e, b[i]];});
+  }
+  function sum(a){//adds up all elements of arrays
+  	var totalSum = 0;
+  	if (typeof a == "object"){
+  		a.forEach(e => totalSum+=sum(e))
+	  	return totalSum;
+  	}
+  	return a;
+  }
+
+//I probably should have called "point" "vector"
+
+  function point(x,y,z/**/){
+  	this.pointValues = [];
+  	for(var i=0;i<arguments.length;i++){this.pointValues.push(arguments[i]);}
+  	this.x = function(){ return this.pointValues[0];}
+  	this.y = function(){ return this.pointValues[1];}
+  	this.z = function(){ return this.pointValues[2];}
+  	this.width = this.x;
+  	this.height = this.y;
+
+  	this.dotProduct = function(otherPoint){
+  		var z = zip(this.tuple(),otherPoint.tuple());
+  		z=z.map(function mul(x){return x[0]*x[1];});
+  		return sum(z);}
+  	this.distance = function(otherPoint){
+  		return Math.sqrt(this.dotProduct(otherPoint));}
+  	this.length = function(){
+  		return Math.sqrt(this.dotProduct(this));}
+  	this.normalize = function(){
+  		var len = this.length(this);
+  		normArray =  this.tuple().map(function div(x){return x/len;});
+  		return new point(...normArray);
+  	}
+	this.addVector = function(otherPoint){
+		var z = zip(this.tuple(),otherPoint.tuple());
+		this.pointValues = z.map(function add(x){return x[0]+x[1]});}
+	this.subVector = function(otherPoint){
+		var z = zip(this.tuple(),otherPoint.tuple());
+		this.pointValues = z.map(function add(x){return x[0]-x[1]});}
+	this.abs = function(){
+		var vals = this.tuple().map(Math.abs(x));
+		return newPoint(...vals)
+	}
+	this.clip = function(otherPoint){//clips to value
+		var z = zip(this.tuple(),otherPoint.tuple());
+		z = z.map(function ca(x){
+			if (x[1] >0){return (x[0]>x[1]) ? x[1]:x[0];}
+			return (x[0]<x[1]) ? x[1]:x[0];
+		});
+		this.pointValues = z;
+	}
+	this.clipAbs = function(otherPoint){//clips to value
+		var z = zip(this.tuple(),otherPoint.tuple());
+
+		this.pointValues = z.map(function ca(x){
+			//x[1]=Math.abs(x[0]*x[1])/x[0];//same as next line, but no branch needed. In verilog we could just set the MSB of x[1] = the MSB of x[0]
+			if(x[0]<=0){x[1]=Math.abs(x[1])*-1;}//makes the range sign same as comparison
+			if (x[1] >0){return (x[0]>x[1]) ? x[1]:x[0];}
+			else{return (x[0]<x[1]) ? x[1]:x[0];}
+		});
+
+	}
+	this.mulScaler = function(scalar){
+		this.pointValues = this.pointValues.map(function sc(x){return x*scalar;});
+	}
+	this.mulVector = function(otherPoint){
+		var z = zip(this.tuple(),otherPoint.tuple());
+		this.pointValues = z.map(function add(x){return x[0]*x[1]});}
+	this.divVector = function(otherPoint){
+		var z = zip(this.tuple(),otherPoint.tuple());
+		this.pointValues = z.map(function add(x){return x[0]/x[1]});}
+	
+  	this.tuple = function(){return this.pointValues;}
+
+  }
+
+  function rrandRange(a,b){
+  	var min = (a<b)?a:b;
+  	var max = (a>b)?a:b;
+  	var t= Math.random()*(max-min)+min;
+  	return t;
+  }
+
+  function rrandRangeInt(a,b){
+  	return Math.floor(rrandRange(a,b));
+  }
+
+  gameObject = function(type,color,width,height){
+  	this.position= new point(300,300);
+  	this.velocity= new point(rrandRange(-3,3),rrandRange(-3,3));
+  	this.acceleration= new point(rrandRange(-0.1,0.1),rrandRange(-0.1,0.1));
+  	this.maxPosition= new point(gameCanvas.canvas.width-width,gameCanvas.canvas.height-height);//this is positive only
+  	this.maxVelocity= new point(15,15); //this is +/-
+  	this.maxAcceleration= new point(8,8);//this is +/-
+  	this.type =  type;
+  	this.mass = 1;//need mass for momentum
+  	this.color = color;
+  	this.wedHei = new point(width,height);
+  	this.life = 0;//putting this there for trail effects!
+  	this.canDie = false;//if trail particle this becomes true
+  	this.hasCollisions = false;
+  	this.draw = function(){
+		ctx = gameCanvas.context;
+		if(this.type == "rect"){
+			ctx.fillStyle = this.color;
+
+			ctx.fillRect(...this.position.tuple(),...this.wedHei.tuple());
+//			ctx.fillRect();
+			//this.wedHei.addVector(new point(1,1));
+		}
+  	}
+
+  	this.phys = function(){
+  		//update new positions and velocity
+  		this.position.addVector(this.velocity);
+  		this.velocity.addVector(this.acceleration);
+  		//clip to bounding positions
+  		this.position.clip(this.maxPosition);
+  		this.position.clip(new point(0,0));
+ 		this.velocity.clipAbs(this.maxVelocity);
+  		//TODO: move this next line to where we set the acceleartion when I write that function.
+//  		this.
+		if (Math.floor(rrandRange(0,100000))%100 == 0 ){
+			this.acceleration = new point(rrandRange(-0.1,0.1),rrandRange(-0.1,0.1));
+
+			this.velocity.mulScaler(0.5);
+		}
+  		//this.acceleration.clipAbs(this.maxAcceleration);
+
+  	}
+  	this.update = function(){
+  		this.phys();
+  		this.draw();
+  	}
+  }
+function hex2rgb(r,g,b){//https://stackoverflow.com/questions/28708798/does-html5-canvas-support-hex-colors-with-alpha
+  return 'rgb('+r+', '+g+', '+b+')';
+}
+function randomColor(){
+
+	return hex2rgb(	rrandRangeInt(0,255),	rrandRangeInt(0,255),	rrandRangeInt(0,255));
+}
+
+function drawGrid(){
+	ctx=gameCanvas.context;
+	gameCanvas.canvas.width;
+	var thick=1;
+	var rows=30;
+	var cols=20;
+			ctx.fillStyle="green";
+
+	for(var i=0;i<rows;i++){
+		ctx.fillRect(i*	gameCanvas.canvas.width/rows,0,thick,	gameCanvas.canvas.height);
+	}
+	for(var j=0;j<cols;j++){
+		ctx.fillRect(0,j*	gameCanvas.canvas.height/cols,	gameCanvas.canvas.width,thick);
+	}
+	for(var i=0;i<rows;i++){
+		for(var j=0;j<cols;j++){
+			ctx.arc(i*	gameCanvas.canvas.width/rows,j*	gameCanvas.canvas.height/cols,	gameCanvas.canvas.width/2,0,2*Math.PI,false);
+		}
+
+	}
+
+}
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+var gameObjects = [];
+
+  function gameMainStartup(){
     gameCanvas.start()
-    
-    
-    
+    for(var i=0;i<10;i++){
+   		gameObjects.push(new gameObject("rect",randomColor(),30,30))
+   	}
+  }
+  
+ function gameMainLoop(){
+  	gameCanvas.clear();
+  	gameCanvas.frameNo +=1;
+  	drawGrid();
+  	gameObjects.forEach(e=>e.update())
+
   }
   
   
-  
-  gameMainLoop();
+  gameMainStartup();
 
+
+  document.getElementById('gameScript').remove()//hehe kinda funny
   
   </script>
   </body>
