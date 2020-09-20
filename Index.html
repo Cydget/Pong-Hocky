@@ -1,0 +1,41 @@
+<html>
+  <head>
+    <title></title>
+    <meta content="">
+    <style></style>
+  </head>
+  <body>
+  
+  
+  <script>
+  var gameCanvas = {
+  canvas : document.createElement("canvas"),
+  start: function() {
+        this.canvas.width = document.body.offsetWidth;
+        this.canvas.height = document.body.offsetHeight;
+        this.context = this.canvas.getContext("2d");
+        document.body.insertBefore(this.canvas, document.body.childNodes[0]);
+        this.frameNo = 0;
+        },
+  clear :function(){
+  
+  
+        this.context.clearRect(0,0,this.canvas.witdh,this.canvas.height);
+        },
+  }
+  
+  function gameMainLoop(){
+    gameCanvas.start()
+    
+    
+    
+  }
+  
+  
+  
+  gameMainLoop();
+
+  
+  </script>
+  </body>
+</html>
