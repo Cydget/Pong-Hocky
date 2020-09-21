@@ -148,6 +148,7 @@
   	this.canDie = false;//if trail particle this becomes true
   	this.hasCollisions = true;
   	this.collidedAlready = false;
+  	this.isMoveable = true;
   	this.draw = function(){
 		ctx = gameCanvas.context;
 		if(this.type == "rect"){
@@ -163,24 +164,20 @@
   	}
 
   	this.collidesWith = function(otherGameObject){
-  		//assuming everything is a rectangle
-  		//we need 4 points 1 for each corner of the box
-		
+		//checks if any point of self's corners is inside the otherGameOb Box
 		if( this.position.checkOtherPointInBox(otherGameObject.position, this.wedHei)){return true;}
 		
 		var t = new point(...this.position.tuple());
 		t.addVector(this.wedHei);
-//		console.log(otherGameObject.position.tuple())
-		//if (t.checkOtherPointInBox(otherGameObject.position, this.wedHei)){return true;}
+		if (t.checkOtherPointInBox(otherGameObject.position, this.wedHei)){return true;}
 		t.addVector(new point(-this.wedHei.x(),0));
-		//if (t.checkOtherPointInBox(otherGameObject.position, this.wedHei)){return true;}
+		if (t.checkOtherPointInBox(otherGameObject.position, this.wedHei)){return true;}
 		t.addVector(new point(this.wedHei.x(),-this.wedHei.y()));
-		//if (t.checkOtherPointInBox(otherGameObject.position, this.wedHei)){return true;}
+		if (t.checkOtherPointInBox(otherGameObject.position, this.wedHei)){return true;}
 		
 		return false;
 
   	}
-
   	this.phys = function(){
   		//update new positions and velocity
   		this.position.addVector(this.velocity);
@@ -197,19 +194,26 @@
 			this.velocity.mulScaler(0.5);
 		}
   		//this.acceleration.clipAbs(this.maxAcceleration);
-
   		//check for collision and mark it and the other objects
   		var self = this;
 		gameObjects.forEach(function(otherOb){
 			//do collision math here
 			if (otherOb.hasCollisions && otherOb !=self){
 				if (!otherOb.collidedAlready){
-					//console.log(typeof this.collidesWith())
-//					self.draw();
 					res = self.collidesWith(otherOb);//only now do we check for collisions
 					if (res){
 						self.collidedAlready = true;
 						otherOb.collidedAlready = true;
+						if(self.isMoveable && otherOb.isMoveable){
+							//gotta do collision math
+						}
+						else if(self.isMoveable && !otherOb.isMoveable){
+							//different math
+							//make self bounce and keep other in place
+						}
+						else if(!self.isMoveable && otherOb.isMoveable){
+							//make other bounce and keep self in place
+						}
 						//TODO big math here
 					}
 					//else{console.log('false')}
@@ -222,10 +226,8 @@
 
   	this.update = function(){
   		this.phys();
-  		//if(gameCanvas.frameNo%5==0){
   		this.draw();
-  		//}
-  	}
+  	  	}
   }
 function hex2rgb(r,g,b){//https://stackoverflow.com/questions/28708798/does-html5-canvas-support-hex-colors-with-alpha
   return 'rgb('+r+', '+g+', '+b+')';
@@ -272,15 +274,13 @@ var gameObjects = [];
   }
   
  function gameMainLoop(){//	if((gameCanvas.frameNo+1)%5==0){
-  		gameCanvas.clear();
-
+	gameCanvas.clear();
   	gameCanvas.frameNo +=1;
   	drawGrid();
   	gameObjects.forEach(e=>e.collidedAlready=false);
   	gameObjects.forEach(e=>e.update());
 
   }
-  
   
   gameMainStartup();
 
