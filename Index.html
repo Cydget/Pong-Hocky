@@ -72,6 +72,9 @@
 	this.subVector = function(otherPoint){
 		var z = zip(this.tuple(),otherPoint.tuple());
 		this.pointValues = z.map(function add(x){return x[0]-x[1]});}
+	this.subVectorReturn = function(otherPoint){
+		var z = zip(this.tuple(),otherPoint.tuple());
+		return new point(...z.map(function add(x){return x[0]-x[1]}));}
 	this.abs = function(){
 		var vals = this.tuple().map(Math.abs(x));
 		return newPoint(...vals)
@@ -98,9 +101,15 @@
 	this.mulScaler = function(scalar){
 		this.pointValues = this.pointValues.map(function sc(x){return x*scalar;});
 	}
+	this.mulScalerReturn = function(scalar){
+		return new point(...this.pointValues.map(function sc(x){return x*scalar;}));
+	}
 	this.mulVector = function(otherPoint){
 		var z = zip(this.tuple(),otherPoint.tuple());
 		this.pointValues = z.map(function add(x){return x[0]*x[1]});}
+	this.mulVectorReturn = function(otherPoint){//when you dont want to change the actual values
+		var z = zip(this.tuple(),otherPoint.tuple());
+		return new point(...z.map(function add(x){return x[0]*x[1]}));}
 	this.divVector = function(otherPoint){
 		var z = zip(this.tuple(),otherPoint.tuple());
 		this.pointValues = z.map(function add(x){return x[0]/x[1]});}
@@ -118,6 +127,44 @@
   		}
   		return false;
 
+  	}
+  	this.leftMatrixMultiply = function(vectorArray){//I dont feel like actually implementing matrixes, so input should be an array of point vectors
+  		//ie [point(1,2,3),point(4,5,6),point(7,8,9),]
+  		//the vector Vector array is on the left side of the multiplacion opperation 
+  		//this = [vecArray]*this
+  		//Either I got better at writeing smaller code, or I did something wrong. This feels too short.
+  		var self = this;
+  		var resultVec = new point(...vectorArray[0].tuple());
+  		resultVec.subVector(vectorArray[0]);//crude way of setting the size
+  		vectorArray.forEach(function doThing(vvec,index){
+  			resultVec.addVector(vvec.mulScalerReturn(self.pointValues[index]));
+  		});
+   		this.pointValues = resultVec.tuple();
+  	}
+  	this.rotate = function(theta){//theta will be in degrees only. I dont have time to switch back and forth
+  		//man vector math is nice to use.
+  		var cosT=Math.cos(theta*Math.PI/180);
+		var sinT=Math.sin(theta*Math.PI/180);  	
+		rotationMatrix = [ new point(cosT,sinT),new point(-sinT,cosT)];
+		this.leftMatrixMultiply(rotationMatrix);
+  	}
+  	this.rotate3D = function(yaw,pitch,roll){//not testing as I dont want to. Also, potentially expensive to do a lot of these operations
+  		var ycosT=Math.cos(yaw*Math.PI/180);
+		var ysinT=Math.sin(yaw*Math.PI/180);
+  		var pcosT=Math.cos(pitch*Math.PI/180);
+		var psinT=Math.sin(pitch*Math.PI/180);
+  		var rcosT=Math.cos(roll*Math.PI/180);
+		var rsinT=Math.sin(roll*Math.PI/180);
+
+		rotationMatrix = [ new point(1,0,0),new point(0,rcosT,rsinT),new point(0,-rsinT,rcosT)];
+		this.leftMatrixMultiply(rotationMatrix);
+		rotationMatrix = [ new point(pcosT,0,-psinT),new point(0,1,0),new point(psinT,0,pcosT)];
+		this.leftMatrixMultiply(rotationMatrix);
+		rotationMatrix = [ new point(ycosT,ysinT,0),new point(-ysinT,ycosT,0),new point(0,0,1)];
+		this.leftMatrixMultiply(rotationMatrix);
+  	}
+  	this.angleWithOtherVector = function(otherVector){
+  		return 180/Math.PI*Math.acos(this.dotProduct(otherVector)/(this.length()*otherVector.length()));
   	}
 
   }
@@ -206,6 +253,16 @@
 						otherOb.collidedAlready = true;
 						if(self.isMoveable && otherOb.isMoveable){
 							//gotta do collision math
+
+							//wrong math just want to have some fun
+							//pretty sure the next line is wrong and I need to do some subtractions
+
+							var theta = self.velocity.angleWithOtherVector(self.velocity.subVectorReturn(otherOb.velocity));
+							//var theta = math.atan2()
+							//console.log(theta)
+							//self.velocity.rotate(theta-90);
+							otherOb.velocity.rotate(-theta);
+
 						}
 						else if(self.isMoveable && !otherOb.isMoveable){
 							//different math
@@ -268,7 +325,7 @@ var gameObjects = [];
 
   function gameMainStartup(){
     gameCanvas.start()
-    for(var i=0;i<120;i++){
+    for(var i=0;i<12;i++){
    		gameObjects.push(new gameObject("rect",randomColor(),rrandRangeInt(15,100),rrandRangeInt(15,100)))
    	}
   }
