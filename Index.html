@@ -44,7 +44,7 @@
 
 //I probably should have called "point" "vector"
 
-  function point(x,y,z/**/){
+  function point(x,y,z){
   	this.pointValues = [];
   	for(var i=0;i<arguments.length;i++){this.pointValues.push(arguments[i]);}
   	this.x = function(){ return this.pointValues[0];}
@@ -106,6 +106,19 @@
 		this.pointValues = z.map(function add(x){return x[0]/x[1]});}
 	
   	this.tuple = function(){return this.pointValues;}
+  	this.checkOtherPointInBox = function(otherPoint,otherWedHeiVec){
+  		//doing it this way to avoid lots of unneeded vars
+  		//should have 4 checks //could probably do this with a fancy loop for infinate checks
+  		//console.log(otherWedHeiVec.tuple());
+  		if (this.x()>=otherPoint.x() &&
+  		    this.x()<= otherPoint.x()+otherWedHeiVec.x() &&
+			this.y()>=otherPoint.y() &&
+			 this.y()<= otherPoint.y()+otherWedHeiVec.y()){
+  			return true;
+  		}
+  		return false;
+
+  	}
 
   }
 
@@ -133,16 +146,39 @@
   	this.wedHei = new point(width,height);
   	this.life = 0;//putting this there for trail effects!
   	this.canDie = false;//if trail particle this becomes true
-  	this.hasCollisions = false;
+  	this.hasCollisions = true;
+  	this.collidedAlready = false;
   	this.draw = function(){
 		ctx = gameCanvas.context;
 		if(this.type == "rect"){
-			ctx.fillStyle = this.color;
+			if(this.collidedAlready==true){
+				ctx.fillStyle = '#acacac';
+			}
+			else{ctx.fillStyle = this.color;}
 
 			ctx.fillRect(...this.position.tuple(),...this.wedHei.tuple());
 //			ctx.fillRect();
 			//this.wedHei.addVector(new point(1,1));
 		}
+  	}
+
+  	this.collidesWith = function(otherGameObject){
+  		//assuming everything is a rectangle
+  		//we need 4 points 1 for each corner of the box
+		
+		if( this.position.checkOtherPointInBox(otherGameObject.position, this.wedHei)){return true;}
+		
+		var t = new point(...this.position.tuple());
+		t.addVector(this.wedHei);
+//		console.log(otherGameObject.position.tuple())
+		//if (t.checkOtherPointInBox(otherGameObject.position, this.wedHei)){return true;}
+		t.addVector(new point(-this.wedHei.x(),0));
+		//if (t.checkOtherPointInBox(otherGameObject.position, this.wedHei)){return true;}
+		t.addVector(new point(this.wedHei.x(),-this.wedHei.y()));
+		//if (t.checkOtherPointInBox(otherGameObject.position, this.wedHei)){return true;}
+		
+		return false;
+
   	}
 
   	this.phys = function(){
@@ -162,10 +198,33 @@
 		}
   		//this.acceleration.clipAbs(this.maxAcceleration);
 
+  		//check for collision and mark it and the other objects
+  		var self = this;
+		gameObjects.forEach(function(otherOb){
+			//do collision math here
+			if (otherOb.hasCollisions && otherOb !=self){
+				if (!otherOb.collidedAlready){
+					//console.log(typeof this.collidesWith())
+//					self.draw();
+					res = self.collidesWith(otherOb);//only now do we check for collisions
+					if (res){
+						self.collidedAlready = true;
+						otherOb.collidedAlready = true;
+						//TODO big math here
+					}
+					//else{console.log('false')}
+				}
+			}
+		})
+
   	}
+
+
   	this.update = function(){
   		this.phys();
+  		//if(gameCanvas.frameNo%5==0){
   		this.draw();
+  		//}
   	}
   }
 function hex2rgb(r,g,b){//https://stackoverflow.com/questions/28708798/does-html5-canvas-support-hex-colors-with-alpha
@@ -207,16 +266,18 @@ var gameObjects = [];
 
   function gameMainStartup(){
     gameCanvas.start()
-    for(var i=0;i<10;i++){
+    for(var i=0;i<100;i++){
    		gameObjects.push(new gameObject("rect",randomColor(),30,30))
    	}
   }
   
- function gameMainLoop(){
-  	gameCanvas.clear();
+ function gameMainLoop(){//	if((gameCanvas.frameNo+1)%5==0){
+  		gameCanvas.clear();
+
   	gameCanvas.frameNo +=1;
   	drawGrid();
-  	gameObjects.forEach(e=>e.update())
+  	gameObjects.forEach(e=>e.collidedAlready=false);
+  	gameObjects.forEach(e=>e.update());
 
   }
   
