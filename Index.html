@@ -268,8 +268,8 @@ var gameObjects = [];
 
   function gameMainStartup(){
     gameCanvas.start()
-    for(var i=0;i<100;i++){
-   		gameObjects.push(new gameObject("rect",randomColor(),30,30))
+    for(var i=0;i<120;i++){
+   		gameObjects.push(new gameObject("rect",randomColor(),rrandRangeInt(15,100),rrandRangeInt(15,100)))
    	}
   }
   
