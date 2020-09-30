@@ -400,6 +400,14 @@ var gameObjects = [];
 	gameObjects[gameObjects.length-1].position = new point(900,400);
    	gameObjects[gameObjects.length-1].isMoveable=false;
 
+   	gameObjects.push(new gameObject("rect",'#000000',100,100));//
+	gameObjects[gameObjects.length-1].position = new point(350,200);
+   	gameObjects[gameObjects.length-1].isMoveable=false;
+
+   	gameObjects.push(new gameObject("rect",'#000000',100,100));//
+	gameObjects[gameObjects.length-1].position = new point(400,500);
+   	gameObjects[gameObjects.length-1].isMoveable=false;
+
     for(var i=0;i<10;i++){
    		gameObjects.push(new gameObject("rect",randomColor(),rrandRangeInt(15,100),rrandRangeInt(15,100)))
    	}
