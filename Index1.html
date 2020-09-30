@@ -1,0 +1,61 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>AirPong Game Java</title>
+</head>
+
+<body>
+	<canvas id="myCanvas" width="1366" height="768">
+            <p>Your browser does not support HTML5!</p>
+		</canvas>
+	<script type="text/javascript">
+		var canvas = document.getElementById("myCanvas");
+		var context = canvas.getContext("2d");
+		var width = canvas.getAttribute('width');
+		var height = canvas.getAttribute('height');
+		
+		var bgImage = new Image();
+		var logoImage = new Image();
+		var compImage = new Image();
+		var pvpImage = new Image();
+		var instructImage = new Image();
+		var settingsImage = new Image();
+		var creditsImage = new Image();
+		  
+		bgImage.src = "C:/Users/grett/Box/Gretta/Lockheed Design Challenge/Web v2/AirPong Background.jpg";
+		logoImage.src = "C:/Users/grett/Box/Gretta/Lockheed Design Challenge/Web v2/AirPong Logo Merge No Back.png";
+		compImage.src = "Images/play.png";
+		pvpImage.src = 
+		instructImage.src = "Images/instructions.png";
+		settingsImage.src = "Images/settings.png";
+		creditsImage.src = "Images/credits.png";
+		
+		var buttonX = [192,110,149,160];
+		var buttonY = [100,140,180,220];
+		var buttonWidth = [96,260,182,160];
+		var buttonHeight = [40,40,40,40];
+		
+		bgImage.onload = function(){
+    context.drawImage(bgImage, 0, 0);
+};
+		logoImage.onload = function(){
+    context.drawImage(logoImage, 50, -10);
+}
+		compImage.onload = function(){
+    context.drawImage(playImage, buttonX[0], buttonY[0]);
+}
+		pvpImage.onload = function(){
+    context.drawImage(playImage, buttonX[0], buttonY[0]);
+}
+		instructImage.onload = function(){
+    context.drawImage(instructImage, buttonX[1], buttonY[1]);
+}
+		settingsImage.onload = function(){
+    context.drawImage(settingsImage, buttonX[2], buttonY[2]);
+}
+		creditsImage.onload = function(){
+    context.drawImage(creditsImage, buttonX[3], buttonY[3]);}
+	</script>
+</body>
+</html>
