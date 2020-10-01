@@ -1,0 +1,56 @@
+<html>
+  <head>
+    <title>Our Game Title</title>
+    <style></style>
+  </head>
+  <body>
+    This is a test
+    <a href="/Game"><h1>Link to the game</h1></a>
+    <br><br>
+    <a href="/Test"><h1>Link to test page</h1></a>
+    <br><br>
+    <div width="100px" height="100px">Value 1<br><h3 id="arduinoValue_1">Initial</h3><br>Value 2<br><h3 id="arduinoValue_2">Initial</h3><br><br>Raw Json<br><h3 id='raw'>Initial</h3></div>
+    
+    <script>
+    
+    
+    
+    
+    function updatePageWithControllerInputs(inputJsonString){
+        //console.log("test: "+inputJsonString);
+        var jsonObj = JSON.parse(inputJsonString);
+        document.getElementById("arduinoValue_1").innerHTML = jsonObj.Controler_1_Analog_1;
+        document.getElementById("arduinoValue_2").innerHTML = jsonObj.Controler_2_Analog_1;
+        document.getElementById("raw").innerHTML = inputJsonString;
+    }
+    
+    function httpGet(theUrl){
+        var Http = new XMLHttpRequest();
+        Http.open("GET",theUrl);
+        Http.send();
+        Http.onreadystatechange = (e) => {
+            updatePageWithControllerInputs(Http.responseText);
+        }
+    }
+    
+    function httpGetAsync(theUrl, callback)
+    {
+        var xmlHttp = new XMLHttpRequest();
+        xmlHttp.onreadystatechange = function() { 
+            if (xmlHttp.readyState == 4 && xmlHttp.status == 200)
+                callback(xmlHttp.responseText);
+        }
+        xmlHttp.open("GET", theUrl, true); // true for asynchronous 
+        xmlHttp.send(null);
+    }
+    
+    
+    function getControllerInputFromArduino(){//sends request for page
+        httpGetAsync("/Input",updatePageWithControllerInputs)
+    }
+
+    setInterval(getControllerInputFromArduino,200);
+    
+    </script>
+    </body>
+</html>
