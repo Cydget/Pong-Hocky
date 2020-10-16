@@ -197,22 +197,34 @@
   	return Math.floor(rrandRange(a,b));
   }
 
-  gameObject = function(type,color,width,height){
+  gameObject = function(type,color,width,height,playerNumber,mainBallObj){
   	this.position= new point(300,300);
   	this.velocity= new point(rrandRange(-3,3),rrandRange(-3,3));
-  	this.acceleration= new point(rrandRange(-0.1,0.1),rrandRange(-0.1,0.1));
+  	this.acceleration= new point(0,0);//new point(rrandRange(-0.1,0.1),rrandRange(-0.1,0.1));
 	this.wedHei = new point(width,height);
   	this.maxPosition= new point(gameCanvas.canvas.width-width,gameCanvas.canvas.height-height);//this is positive only
-  	this.maxVelocity= new point(5,5); //this is +/-
+  	this.maxVelocity= new point(30,30); //this is +/-
   	this.maxAcceleration= new point(8,8);//this is +/-
   	this.type =  type;
+	this.playerSpeedScaler = 50;
+	this.playerNumber = playerNumber;//player 1 and 2 are people 3 is computer
   	this.mass = 1;//need mass for momentum
   	this.color = color;
+	this.mainPuckObj = mainBallObj;
   	this.life = 0;//putting this there for trail effects!
   	this.canDie = false;//if trail particle this becomes true
   	this.hasCollisions = true;
   	this.collidedAlready = false;
   	this.isMoveable = true;//true;
+	if(this.playerNumber==1){//left player
+		this.maxPosition= new point(10*width,gameCanvas.canvas.height-height);//this is positive only
+	}
+	if(this.playerNumber==2){//right player
+		this.maxPosition= new point(gameCanvas.canvas.width-width,gameCanvas.canvas.height-height);//this is positive only
+	}
+
+	
+	
   	this.draw = function(){
 		ctx = gameCanvas.context;
 		if(this.type == "rect"){
@@ -225,6 +237,7 @@
 //			ctx.fillRect();
 			//this.wedHei.addVector(new point(1,1));
 		}
+		
   	}
 
   	this.collidesWith = function(otherGameObject){
@@ -249,26 +262,58 @@
   		//update new positions and velocity
   		var oldPosition=new point(...this.position.tuple());
   		var oldVelocity=new point(...this.velocity.tuple());
-  		if(this.isMoveable){
+
+		if(this.playerNumber >0){
+			var contollerAccelVec;
+			if(this.playerNumber>=3){
+				contollerAccelVec = this.position.subVectorReturn(this.mainPuckObj.position);
+				//contollerAccelVec = this.mainPuckObj.position.subVectorReturn(this.position);
+				//this.position = this.mainPuckObj.position;
+			}
+			else{
+			
+				contollerAccelVec = new point(1,1);
+			}
 
 
+
+			contollerAccelVec = contollerAccelVec.normalize();
+			contollerAccelVec.mulScaler(-this.playerSpeedScaler);
+			this.acceleartion=contollerAccelVec;
+			console.log(this.playerNumber,this.acceleartion);
+			this.velocity.addVector(this.acceleration);
+
+		}
+		
+		if(this.playerNumber>0){
+			this.position.addVector(this.velocity);
+	  		
+		}
+  		if(this.playerNumber<=0 && this.isMoveable){
 	  		this.position.addVector(this.velocity);
 	  		this.velocity.addVector(this.acceleration);
 	  		//clip to bounding positions
 	  		this.position.clip(this.maxPosition);
 	  		this.position.clip(new point(0,0));
 	 		this.velocity.clipAbs(this.maxVelocity);
+		if(this.playerNumber==2 || this.playerNumber==3){//right player
+			
+			//this.position.clip(new point(gameCanvas.canvas.width-width*10,0));
+		}
+
  		}
  		else{
  			this.collidedAlready = false;
  		}
   		//TODO: move this next line to where we set the acceleartion when I write that function.
 //  		this.
+/*
 		if (Math.floor(rrandRange(0,100000))%100 == 0 ){
 			this.acceleration = new point(rrandRange(-0.1,0.1),rrandRange(-0.1,0.1));
 			//this.isMoveable = !this.isMoveable;
 //			this.velocity.mulScaler(0.5);
 		}
+*/
   		//this.acceleration.clipAbs(this.maxAcceleration);
   		//check for collision and mark it and the other objects
   		var self = this;
@@ -380,37 +425,55 @@ var gameObjects = [];
   function gameMainStartup(){
     gameCanvas.start()
     var q = 7;
-   	gameObjects.push(new gameObject("rect",'#000000',gameCanvas.canvas.width,q));//
+	//gameObjects[0] is main ball object;
+	
+	gameObjects.push(new gameObject("rect",'#FF0000',40,40,0,null));
+	gameObjects[gameObjects.length-1].position = new point(650,600);
+   	gameObjects[gameObjects.length-1].isMoveable=false;
+	gameObjects[gameObjects.length-1].mainPuckObj = gameObjects[gameObjects.length-1];
+	
+	gameObjects.push(new gameObject("rect",'#acacac',20,80,1,gameObjects[0]));
+	gameObjects[gameObjects.length-1].position = new point(30,30);
+   	gameObjects[gameObjects.length-1].isMoveable=true;
+
+
+	gameObjects.push(new gameObject("rect",'#666666',20,80,3,gameObjects[0]));
+	gameObjects[gameObjects.length-1].position = new point(30,30);
+   	gameObjects[gameObjects.length-1].isMoveable=true;
+	
+	
+	
+   	gameObjects.push(new gameObject("rect",'#000000',gameCanvas.canvas.width,q,0,gameObjects[0]));//
    	gameObjects[gameObjects.length-1].position = new point(0,0);
    	gameObjects[gameObjects.length-1].isMoveable=false;
-   	gameObjects.push(new gameObject("rect",'#000000',gameCanvas.canvas.width,q));//
+   	gameObjects.push(new gameObject("rect",'#000000',gameCanvas.canvas.width,q,0,gameObjects[0]));//
    	gameObjects[gameObjects.length-1].isMoveable=false;
    	gameObjects[gameObjects.length-1].position = new point(0,gameCanvas.canvas.height-q);
-	gameObjects.push(new gameObject("rect",'#000000',q,gameCanvas.canvas.height));//
+	gameObjects.push(new gameObject("rect",'#000000',q,gameCanvas.canvas.height,0,gameObjects[0]));//
 	gameObjects[gameObjects.length-1].isMoveable=false;
    	gameObjects[gameObjects.length-1].position = new point(0,0);
-   	gameObjects.push(new gameObject("rect",'#000000',q,gameCanvas.canvas.height));//
+   	gameObjects.push(new gameObject("rect",'#000000',q,gameCanvas.canvas.height,0,gameObjects[0]));//
    	gameObjects[gameObjects.length-1].position = new point(gameCanvas.canvas.width-q,0);
    	gameObjects[gameObjects.length-1].isMoveable=false;
 
 
-   	gameObjects.push(new gameObject("rect",'#000000',100,100));//
+   	gameObjects.push(new gameObject("rect",'#000000',100,100,0,gameObjects[0]));//
 	gameObjects[gameObjects.length-1].position = new point(900,400);
    	gameObjects[gameObjects.length-1].isMoveable=false;
 
-   	gameObjects.push(new gameObject("rect",'#000000',100,100));//
+   	gameObjects.push(new gameObject("rect",'#000000',100,100,0,gameObjects[0]));//
 	gameObjects[gameObjects.length-1].position = new point(350,200);
    	gameObjects[gameObjects.length-1].isMoveable=false;
 
-   	gameObjects.push(new gameObject("rect",'#000000',100,100));//
+   	gameObjects.push(new gameObject("rect",'#000000',100,100,0,gameObjects[0]));//
 	gameObjects[gameObjects.length-1].position = new point(400,500);
    	gameObjects[gameObjects.length-1].isMoveable=false;
 
     for(var i=0;i<10;i++){
-   		gameObjects.push(new gameObject("rect",randomColor(),rrandRangeInt(15,100),rrandRangeInt(15,100)))
+   		gameObjects.push(new gameObject("rect",randomColor(),rrandRangeInt(15,100),rrandRangeInt(15,100),0,gameObjects[0]))
    	}
 
-   	gameObjects.push(new gameObject("rect",'#000000',80,80));//
+   	gameObjects.push(new gameObject("rect",'#000000',80,80,0,gameObjects[0]));//
 
   }
   
@@ -420,7 +483,7 @@ var gameObjects = [];
   	drawGrid();
 
    	gameObjects.pop();
-   	gameObjects.push(new gameObject("rect",'#000000',80,80));//
+   	gameObjects.push(new gameObject("rect",'#000000',80,80,0,gameObjects[0]));//
 	gameObjects[gameObjects.length-1].position = new point(mousePos.x(),mousePos.y());
 	gameObjects[gameObjects.length-1].velocity = new point(0,0);
 	gameObjects[gameObjects.length-1].acceleration = new point(0,0);
