@@ -36,6 +36,7 @@ void gameFunc() {
   String page = readFile("/Game.html");
   for (uint8_t i = 0; i < server.args(); i++) {
     //in this loop replace all instances of "$SERVER"+server.argName(i) with server.arg(i)
+    //this allows for xss by simply doing something like sending 5;alert("xss") through a server.arg(i), but I dont feel like doing any sanitization here. The easiest fix would be allowing only numbers to pass or stripping special characters.
     page.replace("$SETTING"+server.argName(i),server.arg(i));
   }
   server.send(200, "text/HTML", page);
