@@ -2,11 +2,19 @@
   <head>
     <title></title>
     <meta content="">
-    <style></style>
+    <style>
+    	canvas{
+			#  position: absolute;
+			#  top: 30px;
+			#  border: 3px solid green;
+			#transform-origin: bottom;
+			#transform: rotate(90deg);
+    		}
+
+    </style>
   </head>
   <body>
-  
-  
+
   <script id="gameScript">
   function getMousePos(canvas,evt){
 
@@ -464,6 +472,7 @@ var gameObjects = [];
   function gameMainStartup(){
     gameCanvas.start()
     var q = 7;
+    var paddleHei=300;
 	//gameObjects[0] is main ball object;
 	
 	gameObjects.push(new gameObject("rect",'#FF0000',40,40,0,null));
@@ -472,12 +481,12 @@ var gameObjects = [];
    	gameObjects[gameObjects.length-1].velocity = new point(rrandRange(-15,15),rrandRange(-10,10));
 	gameObjects[gameObjects.length-1].mainPuckObj = gameObjects[gameObjects.length-1];
 	
-	gameObjects.push(new gameObject("rect",'#00ff00',20,80,1,gameObjects[0]));
+	gameObjects.push(new gameObject("rect",'#00ff00',20,paddleHei,1,gameObjects[0]));
 	gameObjects[gameObjects.length-1].position = new point(30,30);
    	gameObjects[gameObjects.length-1].isMoveable=true;
 	gameObjects[gameObjects.length-1].velocity = new point(0,30);
 
-	gameObjects.push(new gameObject("rect",'#0000ff',20,80,3,gameObjects[0]));
+	gameObjects.push(new gameObject("rect",'#0000ff',20,paddleHei,3,gameObjects[0]));
 	gameObjects[gameObjects.length-1].position = new point(30,30);
    	gameObjects[gameObjects.length-1].isMoveable=true;
 	
